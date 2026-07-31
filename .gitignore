@@ -1,0 +1,48 @@
+# Local configuration and secrets (keep .env.example tracked)
+.env
+.env.*
+!.env.example
+
+# Python
+.venv/
+venv/
+env/
+__pycache__/
+*.py[cod]
+.pytest_cache/
+.mypy_cache/
+.ruff_cache/
+
+# Coverage and reports
+.coverage
+.coverage.*
+htmlcov/
+coverage.xml
+
+# IDE and OS files
+.idea/
+.vscode/
+*.swp
+.DS_Store
+Thumbs.db
+
+# Local databases
+*.db
+*.sqlite
+*.sqlite3
+
+# Keys and certificates
+*.key
+*.pem
+*.p12
+*.pfx
+*.crt
+*.cer
+
+# Logs
+*.log
+logs/
+
+# Docker overrides may contain local secrets
+docker-compose.override.yml
+docker-compose.*.override.yml

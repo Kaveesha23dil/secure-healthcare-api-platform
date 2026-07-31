@@ -1,0 +1,445 @@
+openapi: 3.0.3
+info:
+  title: Secure Healthcare API Platform
+  version: 1.0.0
+  description: Contract-first educational appointment API using fictional data only; no FHIR or regulatory compliance is claimed.
+servers:
+  - url: https://api.example.com
+    description: Placeholder gateway URL
+paths:
+  /health:
+    get:
+      operationId: getHealth
+      tags: [System]
+      summary: Get basic service health
+      description: Returns basic status without dependency or configuration details.
+      security: []
+      responses:
+        '200':
+          description: Service is available.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/HealthResponse' }
+              example: { status: ok }
+        '500': { $ref: '#/components/responses/InternalError' }
+  /api/v1/doctors:
+    get:
+      operationId: listDoctors
+      tags: [Doctors]
+      summary: List doctors
+      description: Returns a paginated directory projection of active doctors.
+      security: [{ oauth2: [doctor:read] }]
+      parameters:
+        - { $ref: '#/components/parameters/Page' }
+        - { $ref: '#/components/parameters/Size' }
+        - { name: specialization, in: query, schema: { type: string, maxLength: 100 } }
+        - { name: sort, in: query, description: Allowlisted sort with optional minus prefix., schema: { type: string, enum: [displayName, '-displayName'] } }
+      responses:
+        '200':
+          description: Paginated doctor summaries.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/PaginatedDoctorResponse' }
+              example: { items: [{ id: 2f1d3e62-19b8-4ef8-89b0-c6fb7c419920, displayName: Dr. Avery Rowan, specialization: Family Medicine, clinicName: Example Community Clinic }], page: 1, size: 20, totalItems: 1, totalPages: 1 }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+        '500': { $ref: '#/components/responses/InternalError' }
+    post:
+      operationId: createDoctor
+      tags: [Doctors]
+      summary: Create a doctor
+      description: Creates a fictional directory record; backend role policy restricts this to administrators.
+      security: [{ oauth2: [doctor:write, admin:manage] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CreateDoctorRequest' }
+            example: { displayName: Dr. Avery Rowan, specialization: Family Medicine, clinicName: Example Community Clinic }
+      responses:
+        '201':
+          description: Doctor created.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Doctor' }
+              example: { id: 2f1d3e62-19b8-4ef8-89b0-c6fb7c419920, displayName: Dr. Avery Rowan, specialization: Family Medicine, clinicName: Example Community Clinic, active: true }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '422': { $ref: '#/components/responses/ValidationError' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+        '500': { $ref: '#/components/responses/InternalError' }
+  /api/v1/doctors/{doctorId}:
+    parameters: [{ $ref: '#/components/parameters/DoctorId' }]
+    get:
+      operationId: getDoctor
+      tags: [Doctors]
+      summary: Get a doctor
+      description: Returns one active doctor directory record.
+      security: [{ oauth2: [doctor:read] }]
+      responses:
+        '200':
+          description: Doctor details.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Doctor' }
+              example: { id: 2f1d3e62-19b8-4ef8-89b0-c6fb7c419920, displayName: Dr. Avery Rowan, specialization: Family Medicine, clinicName: Example Community Clinic, active: true }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+        '500': { $ref: '#/components/responses/InternalError' }
+    patch:
+      operationId: updateDoctor
+      tags: [Doctors]
+      summary: Update a doctor
+      description: Partially updates a doctor; restricted to administrators.
+      security: [{ oauth2: [doctor:write, admin:manage] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/UpdateDoctorRequest' }
+            example: { clinicName: Example North Clinic, active: true }
+      responses:
+        '200':
+          description: Updated doctor.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Doctor' }
+              example: { id: 2f1d3e62-19b8-4ef8-89b0-c6fb7c419920, displayName: Dr. Avery Rowan, specialization: Family Medicine, clinicName: Example North Clinic, active: true }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '422': { $ref: '#/components/responses/ValidationError' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+        '500': { $ref: '#/components/responses/InternalError' }
+    delete:
+      operationId: deleteDoctor
+      tags: [Doctors]
+      summary: Delete a doctor
+      description: Soft-deletes or deactivates a doctor while preserving history.
+      security: [{ oauth2: [doctor:write, admin:manage] }]
+      responses:
+        '204': { description: Doctor deactivated; no response body. }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+        '500': { $ref: '#/components/responses/InternalError' }
+  /api/v1/doctors/{doctorId}/availability:
+    parameters: [{ $ref: '#/components/parameters/DoctorId' }]
+    get:
+      operationId: listDoctorAvailability
+      tags: [Availability]
+      summary: List doctor availability
+      description: Returns available slots in a bounded date range.
+      security: [{ oauth2: [availability:read] }]
+      parameters:
+        - { $ref: '#/components/parameters/Page' }
+        - { $ref: '#/components/parameters/Size' }
+        - { name: from, in: query, schema: { type: string, format: date-time }, example: '2026-08-03T00:00:00+05:30' }
+        - { name: to, in: query, schema: { type: string, format: date-time }, example: '2026-08-10T00:00:00+05:30' }
+      responses:
+        '200':
+          description: Available slots with pagination metadata.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/PaginatedAvailabilityResponse' }
+              example: { items: [{ id: a6eb109f-d839-445f-aec2-00905d2c4554, doctorId: 2f1d3e62-19b8-4ef8-89b0-c6fb7c419920, startAt: '2026-08-03T09:00:00+05:30', endAt: '2026-08-03T09:30:00+05:30', available: true }], page: 1, size: 20, totalItems: 1, totalPages: 1 }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+        '500': { $ref: '#/components/responses/InternalError' }
+    post:
+      operationId: createDoctorAvailability
+      tags: [Availability]
+      summary: Create a doctor availability slot
+      description: Creates a slot for the authenticated doctor's own schedule when enabled, or for an administrator.
+      security: [{ oauth2: [availability:write] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CreateAvailabilitySlotRequest' }
+            example: { startAt: '2026-08-03T09:00:00+05:30', endAt: '2026-08-03T09:30:00+05:30' }
+      responses:
+        '201':
+          description: Availability slot created.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/AvailabilitySlot' }
+              example: { id: a6eb109f-d839-445f-aec2-00905d2c4554, doctorId: 2f1d3e62-19b8-4ef8-89b0-c6fb7c419920, startAt: '2026-08-03T09:00:00+05:30', endAt: '2026-08-03T09:30:00+05:30', available: true }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '422': { $ref: '#/components/responses/ValidationError' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+        '500': { $ref: '#/components/responses/InternalError' }
+  /api/v1/appointments:
+    post:
+      operationId: createAppointment
+      tags: [Appointments]
+      summary: Create an appointment
+      description: Creates an appointment for the authenticated patient; patient identity is never accepted in the body.
+      security: [{ oauth2: [appointment:create] }]
+      parameters: [{ $ref: '#/components/parameters/IdempotencyKey' }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/CreateAppointmentRequest' }
+            example: { doctorId: 2f1d3e62-19b8-4ef8-89b0-c6fb7c419920, slotId: a6eb109f-d839-445f-aec2-00905d2c4554, reason: Routine fictional consultation }
+      responses:
+        '201':
+          description: Appointment created for the authenticated patient.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Appointment' }
+              example: &appointmentExample { id: 6f471ba2-28b5-41d4-9a5b-85f44bc3ae6e, doctorId: 2f1d3e62-19b8-4ef8-89b0-c6fb7c419920, slotId: a6eb109f-d839-445f-aec2-00905d2c4554, startAt: '2026-08-03T09:00:00+05:30', endAt: '2026-08-03T09:30:00+05:30', reason: Routine fictional consultation, status: booked, createdAt: '2026-08-01T10:15:30+05:30', updatedAt: '2026-08-01T10:15:30+05:30' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '422': { $ref: '#/components/responses/ValidationError' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+        '500': { $ref: '#/components/responses/InternalError' }
+  /api/v1/appointments/{appointmentId}:
+    parameters: [{ $ref: '#/components/parameters/AppointmentId' }]
+    get:
+      operationId: getAppointment
+      tags: [Appointments]
+      summary: Get an authorized appointment
+      description: Returns an owned, assigned, or administratively accessible appointment; inaccessible records use safe 404.
+      security: [{ oauth2: [appointment:read] }, { oauth2: [appointment:read:all] }]
+      responses:
+        '200':
+          description: Authorized appointment details.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Appointment' }
+              example: *appointmentExample
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+        '500': { $ref: '#/components/responses/InternalError' }
+    patch:
+      operationId: updateAppointment
+      tags: [Appointments]
+      summary: Update appointment status
+      description: Patients may cancel owned proposed/booked records. Assigned doctors and administrators may apply valid operational transitions; terminal states cannot be reopened.
+      security: [{ oauth2: [appointment:update] }, { oauth2: [appointment:cancel] }]
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema: { $ref: '#/components/schemas/UpdateAppointmentRequest' }
+            examples:
+              doctorCheckIn: { value: { status: checked-in } }
+              patientCancellation: { value: { status: cancelled } }
+      responses:
+        '200':
+          description: Appointment status updated.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/Appointment' }
+              example: { id: 6f471ba2-28b5-41d4-9a5b-85f44bc3ae6e, doctorId: 2f1d3e62-19b8-4ef8-89b0-c6fb7c419920, slotId: a6eb109f-d839-445f-aec2-00905d2c4554, startAt: '2026-08-03T09:00:00+05:30', endAt: '2026-08-03T09:30:00+05:30', reason: Routine fictional consultation, status: checked-in, createdAt: '2026-08-01T10:15:30+05:30', updatedAt: '2026-08-03T09:02:00+05:30' }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '404': { $ref: '#/components/responses/NotFound' }
+        '409': { $ref: '#/components/responses/Conflict' }
+        '422': { $ref: '#/components/responses/ValidationError' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+        '500': { $ref: '#/components/responses/InternalError' }
+  /api/v1/patients/me/appointments:
+    get:
+      operationId: listMyAppointments
+      tags: [Patients]
+      summary: List the current patient's appointments
+      description: Derives patient identity from the verified token and returns only owned appointments.
+      security: [{ oauth2: [appointment:read] }]
+      parameters:
+        - { $ref: '#/components/parameters/Page' }
+        - { $ref: '#/components/parameters/Size' }
+        - { name: status, in: query, schema: { $ref: '#/components/schemas/AppointmentStatus' } }
+      responses:
+        '200':
+          description: Current patient's paginated appointments.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/PaginatedAppointmentResponse' }
+              example: { items: [*appointmentExample], page: 1, size: 20, totalItems: 1, totalPages: 1 }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+        '500': { $ref: '#/components/responses/InternalError' }
+  /api/v1/admin/appointments:
+    get:
+      operationId: listAllAppointments
+      tags: [Administration]
+      summary: List all appointments administratively
+      description: Returns a minimized paginated view to authorized administrators.
+      security: [{ oauth2: [appointment:read:all, admin:manage] }]
+      parameters:
+        - { $ref: '#/components/parameters/Page' }
+        - { $ref: '#/components/parameters/Size' }
+        - { name: status, in: query, schema: { $ref: '#/components/schemas/AppointmentStatus' } }
+        - { name: doctorId, in: query, schema: { type: string, format: uuid } }
+      responses:
+        '200':
+          description: Administrative appointment page.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/PaginatedAppointmentResponse' }
+              example: { items: [], page: 1, size: 20, totalItems: 0, totalPages: 0 }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+        '500': { $ref: '#/components/responses/InternalError' }
+  /api/v1/admin/patients:
+    get:
+      operationId: listPatients
+      tags: [Administration]
+      summary: List patient accounts administratively
+      description: Returns minimized masked patient summaries to authorized administrators.
+      security: [{ oauth2: [patient:read, admin:manage] }]
+      parameters: [{ $ref: '#/components/parameters/Page' }, { $ref: '#/components/parameters/Size' }]
+      responses:
+        '200':
+          description: Paginated masked patient summaries.
+          content:
+            application/json:
+              schema: { $ref: '#/components/schemas/PaginatedPatientResponse' }
+              example: { items: [{ id: 8b6bbddb-f2b8-4c62-ae66-0f550e93fd7e, displayName: Fictional Patient, maskedEmail: 'f***@example.invalid', status: active }], page: 1, size: 20, totalItems: 1, totalPages: 1 }
+        '400': { $ref: '#/components/responses/BadRequest' }
+        '401': { $ref: '#/components/responses/Unauthorized' }
+        '403': { $ref: '#/components/responses/Forbidden' }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
+        '500': { $ref: '#/components/responses/InternalError' }
+
+components:
+  securitySchemes:
+    oauth2:
+      type: oauth2
+      description: Placeholder endpoints to replace with WSO2 or identity-provider URLs. Use Authorization Code with PKCE for users and Client Credentials only for trusted services; password grant is prohibited.
+      flows:
+        authorizationCode:
+          authorizationUrl: https://localhost:9443/oauth2/authorize
+          tokenUrl: https://localhost:9443/oauth2/token
+          scopes: &scopes
+            doctor:read: Read doctor directory information
+            doctor:write: Manage doctor records
+            availability:read: Read doctor availability
+            availability:write: Manage authorized availability
+            appointment:create: Create an appointment for the authenticated patient
+            appointment:read: Read owned or assigned appointments
+            appointment:read:all: Read all appointments administratively
+            appointment:update: Update authorized appointment states
+            appointment:cancel: Cancel an owned or assigned appointment
+            patient:read: Read authorized patient summaries
+            patient:write: Manage patient accounts
+            admin:manage: Perform administrative functions
+        clientCredentials:
+          tokenUrl: https://localhost:9443/oauth2/token
+          scopes: *scopes
+  parameters:
+    DoctorId: { name: doctorId, in: path, required: true, description: Doctor UUID., schema: { type: string, format: uuid } }
+    AppointmentId: { name: appointmentId, in: path, required: true, description: Appointment UUID; inaccessible resources are reported as absent., schema: { type: string, format: uuid } }
+    Page: { name: page, in: query, description: One-based page number., schema: { type: integer, minimum: 1, default: 1 } }
+    Size: { name: size, in: query, description: Page size; maximum 100., schema: { type: integer, minimum: 1, maximum: 100, default: 20 } }
+    IdempotencyKey: { name: Idempotency-Key, in: header, required: false, description: UUID binding a retried create request to its subject and content., schema: { type: string, format: uuid } }
+  responses:
+    BadRequest: { description: Malformed request or invalid state transition., content: { application/problem+json: { schema: { $ref: '#/components/schemas/ProblemDetails' }, example: { type: 'https://api.example.com/problems/bad-request', title: Bad request, status: 400, detail: The request could not be processed., traceId: 4de6527d-9ea7-471a-84bc-3b87eaef2164 } } } }
+    Unauthorized: { description: Missing or invalid authentication., content: { application/problem+json: { schema: { $ref: '#/components/schemas/ProblemDetails' }, example: { type: 'https://api.example.com/problems/authentication-required', title: Authentication required, status: 401, detail: Valid authentication is required., traceId: 4de6527d-9ea7-471a-84bc-3b87eaef2164 } } } }
+    Forbidden: { description: Authenticated subject lacks functional permission., content: { application/problem+json: { schema: { $ref: '#/components/schemas/ProblemDetails' }, example: { type: 'https://api.example.com/problems/forbidden', title: Forbidden, status: 403, detail: The operation is not permitted., traceId: 4de6527d-9ea7-471a-84bc-3b87eaef2164 } } } }
+    NotFound: { description: Resource is absent or inaccessible; ownership is never disclosed., content: { application/problem+json: { schema: { $ref: '#/components/schemas/ProblemDetails' }, example: { type: 'https://api.example.com/problems/not-found', title: Resource not found, status: 404, detail: The requested resource does not exist or is not accessible., traceId: 4de6527d-9ea7-471a-84bc-3b87eaef2164 } } } }
+    Conflict: { description: Duplicate booking, idempotency mismatch, or state conflict., content: { application/problem+json: { schema: { $ref: '#/components/schemas/ProblemDetails' }, example: { type: 'https://api.example.com/problems/conflict', title: Conflict, status: 409, detail: The request conflicts with current resource state., traceId: 4de6527d-9ea7-471a-84bc-3b87eaef2164 } } } }
+    ValidationError: { description: Schema validation failed., content: { application/problem+json: { schema: { $ref: '#/components/schemas/ValidationProblemDetails' }, example: { type: 'https://api.example.com/problems/validation', title: Validation failed, status: 422, detail: One or more fields are invalid., traceId: 4de6527d-9ea7-471a-84bc-3b87eaef2164, errors: [{ field: reason, message: Must not exceed 500 characters. }] } } } }
+    TooManyRequests: { description: Request rate or quota exceeded., content: { application/problem+json: { schema: { $ref: '#/components/schemas/ProblemDetails' }, example: { type: 'https://api.example.com/problems/rate-limit', title: Too many requests, status: 429, detail: The request rate limit was exceeded., traceId: 4de6527d-9ea7-471a-84bc-3b87eaef2164 } } } }
+    InternalError: { description: Unexpected error; no stack trace or internal details., content: { application/problem+json: { schema: { $ref: '#/components/schemas/ProblemDetails' }, example: { type: 'https://api.example.com/problems/internal-error', title: Internal server error, status: 500, detail: An unexpected error occurred., traceId: 4de6527d-9ea7-471a-84bc-3b87eaef2164 } } } }
+  schemas:
+    DoctorSummary:
+      type: object
+      additionalProperties: false
+      required: [id, displayName, specialization, clinicName]
+      properties: { id: { type: string, format: uuid }, displayName: { type: string, minLength: 1, maxLength: 120 }, specialization: { type: string, minLength: 1, maxLength: 100 }, clinicName: { type: string, minLength: 1, maxLength: 160 } }
+    Doctor:
+      allOf: [{ $ref: '#/components/schemas/DoctorSummary' }, { type: object, additionalProperties: false, required: [active], properties: { active: { type: boolean } } }]
+    CreateDoctorRequest:
+      type: object
+      additionalProperties: false
+      required: [displayName, specialization, clinicName]
+      properties: { displayName: { type: string, minLength: 1, maxLength: 120 }, specialization: { type: string, minLength: 1, maxLength: 100 }, clinicName: { type: string, minLength: 1, maxLength: 160 } }
+    UpdateDoctorRequest:
+      type: object
+      additionalProperties: false
+      minProperties: 1
+      properties: { displayName: { type: string, minLength: 1, maxLength: 120 }, specialization: { type: string, minLength: 1, maxLength: 100 }, clinicName: { type: string, minLength: 1, maxLength: 160 }, active: { type: boolean } }
+    AvailabilitySlot:
+      type: object
+      additionalProperties: false
+      required: [id, doctorId, startAt, endAt, available]
+      properties: { id: { type: string, format: uuid }, doctorId: { type: string, format: uuid }, startAt: { type: string, format: date-time, example: '2026-08-03T09:00:00+05:30' }, endAt: { type: string, format: date-time, example: '2026-08-03T09:30:00+05:30' }, available: { type: boolean } }
+    CreateAvailabilitySlotRequest:
+      type: object
+      additionalProperties: false
+      required: [startAt, endAt]
+      properties: { startAt: { type: string, format: date-time }, endAt: { type: string, format: date-time } }
+    AppointmentStatus: { type: string, enum: [proposed, booked, checked-in, completed, cancelled, no-show] }
+    Appointment:
+      type: object
+      additionalProperties: false
+      required: [id, doctorId, slotId, startAt, endAt, reason, status, createdAt, updatedAt]
+      properties: { id: { type: string, format: uuid }, doctorId: { type: string, format: uuid }, slotId: { type: string, format: uuid }, startAt: { type: string, format: date-time }, endAt: { type: string, format: date-time }, reason: { type: string, maxLength: 500, description: Sensitive; omit from logs. }, status: { $ref: '#/components/schemas/AppointmentStatus' }, createdAt: { type: string, format: date-time }, updatedAt: { type: string, format: date-time } }
+    CreateAppointmentRequest:
+      type: object
+      additionalProperties: false
+      description: Patient identity is derived only from the verified token.
+      required: [doctorId, slotId, reason]
+      properties: { doctorId: { type: string, format: uuid }, slotId: { type: string, format: uuid }, reason: { type: string, minLength: 1, maxLength: 500 } }
+    UpdateAppointmentRequest:
+      type: object
+      additionalProperties: false
+      description: 'Role-aware transitions: patient proposed/booked to cancelled; assigned doctor or administrator proposed to booked, booked to checked-in/no-show/cancelled, checked-in to completed; terminal states cannot reopen.'
+      required: [status]
+      properties: { status: { $ref: '#/components/schemas/AppointmentStatus' } }
+    PaginationMetadata:
+      type: object
+      additionalProperties: false
+      required: [page, size, totalItems, totalPages]
+      properties: { page: { type: integer, minimum: 1 }, size: { type: integer, minimum: 1, maximum: 100 }, totalItems: { type: integer, minimum: 0 }, totalPages: { type: integer, minimum: 0 } }
+    PaginatedDoctorResponse: { allOf: [{ $ref: '#/components/schemas/PaginationMetadata' }, { type: object, additionalProperties: false, required: [items], properties: { items: { type: array, items: { $ref: '#/components/schemas/DoctorSummary' } } } }] }
+    PaginatedAvailabilityResponse: { allOf: [{ $ref: '#/components/schemas/PaginationMetadata' }, { type: object, additionalProperties: false, required: [items], properties: { items: { type: array, items: { $ref: '#/components/schemas/AvailabilitySlot' } } } }] }
+    PaginatedAppointmentResponse: { allOf: [{ $ref: '#/components/schemas/PaginationMetadata' }, { type: object, additionalProperties: false, required: [items], properties: { items: { type: array, items: { $ref: '#/components/schemas/Appointment' } } } }] }
+    PatientSummary:
+      type: object
+      additionalProperties: false
+      required: [id, displayName, maskedEmail, status]
+      properties: { id: { type: string, format: uuid }, displayName: { type: string, maxLength: 120 }, maskedEmail: { type: string, maxLength: 254 }, status: { type: string, enum: [active, disabled] } }
+    PaginatedPatientResponse: { allOf: [{ $ref: '#/components/schemas/PaginationMetadata' }, { type: object, additionalProperties: false, required: [items], properties: { items: { type: array, items: { $ref: '#/components/schemas/PatientSummary' } } } }] }
+    ProblemDetails:
+      type: object
+      additionalProperties: false
+      required: [type, title, status, detail, traceId]
+      properties: { type: { type: string, format: uri }, title: { type: string }, status: { type: integer, minimum: 400, maximum: 599 }, detail: { type: string }, instance: { type: string, format: uri-reference }, traceId: { type: string, format: uuid } }
+    ValidationErrorItem: { type: object, additionalProperties: false, required: [field, message], properties: { field: { type: string }, message: { type: string } } }
+    ValidationProblemDetails: { allOf: [{ $ref: '#/components/schemas/ProblemDetails' }, { type: object, additionalProperties: false, required: [errors], properties: { errors: { type: array, minItems: 1, items: { $ref: '#/components/schemas/ValidationErrorItem' } } } }] }
+    HealthResponse: { type: object, additionalProperties: false, required: [status], properties: { status: { type: string, enum: [ok] } } }
