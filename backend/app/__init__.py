@@ -1,0 +1,1 @@
+"""Secure Healthcare API application."""
