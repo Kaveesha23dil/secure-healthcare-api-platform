@@ -1,6 +1,6 @@
 # Secure Healthcare API Platform
 
-> **Current phase:** API design, security planning, and repository foundation only. FastAPI implementation and WSO2 API Manager installation/configuration are intentionally deferred.
+> **Current phase:** FastAPI backend development. WSO2 API Manager installation/configuration remains intentionally deferred.
 
 ## Problem statement
 
@@ -75,16 +75,15 @@ API-first and contract-first design, least privilege, deny by default, defense i
 ## Local development plan
 
 1. Copy `.env.example` to `.env` and replace development placeholders locally.
-2. Start PostgreSQL with `docker compose up -d db`.
-3. In the next phase, scaffold FastAPI, SQLAlchemy, Alembic, tests, and JWT validation.
-4. Validate behavior against `api-spec/healthcare-api.yaml` before integrating WSO2.
-
-No application service exists in this phase.
+2. Start the database and API with `docker compose up --build -d`.
+3. Apply migrations with `docker compose exec api alembic upgrade head`.
+4. Run backend quality checks from `backend/` with `ruff check .`, `mypy app`, and `pytest`.
+5. Validate behavior against `api-spec/healthcare-api.yaml` before integrating WSO2.
 
 ## Roadmap
 
 1. **Foundation (current):** scope, architecture, security design, schema plan, and OpenAPI contract.
-2. **Backend:** FastAPI resources, migrations, authorization, concurrency controls, audit events, and automated tests.
+2. **Backend (current):** FastAPI resources, migrations, authorization, concurrency controls, audit events, and automated tests.
 3. **Gateway:** WSO2 publication, OAuth/OIDC integration, policies, throttling, versioning, and analytics.
 4. **Hardening:** security testing, observability, operational runbooks, and controlled deprecation exercises.
 
