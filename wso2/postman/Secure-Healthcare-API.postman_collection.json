@@ -1,0 +1,16 @@
+{
+  "info":{"name":"Secure Healthcare API through WSO2","schema":"https://schema.getpostman.com/json/collection/v2.1.0/collection.json","description":"Fictional local integration requests. Supply accessToken through an environment; never save a real token in this collection."},
+  "auth":{"type":"bearer","bearer":[{"key":"token","value":"{{accessToken}}","type":"string"}]},
+  "item":[
+    {"name":"Public health","request":{"auth":{"type":"noauth"},"method":"GET","url":{"raw":"{{gatewayUrl}}{{apiContext}}/health","host":["{{gatewayUrl}}"],"path":["{{apiContext}}","health"]}},"event":[{"listen":"test","script":{"exec":["pm.test('health succeeds', () => pm.response.to.have.status(200));"]}}]},
+    {"name":"List doctors","request":{"method":"GET","url":{"raw":"{{gatewayUrl}}{{apiContext}}/api/v1/doctors","host":["{{gatewayUrl}}"],"path":["{{apiContext}}","api","v1","doctors"]}},"event":[{"listen":"test","script":{"exec":["pm.test('list succeeds', () => pm.expect(pm.response.code).to.be.oneOf([200,401,403,429]));"]}}]},
+    {"name":"Get doctor","request":{"method":"GET","url":{"raw":"{{gatewayUrl}}{{apiContext}}/api/v1/doctors/{{doctorId}}","host":["{{gatewayUrl}}"],"path":["{{apiContext}}","api","v1","doctors","{{doctorId}}"]}}},
+    {"name":"Get availability","request":{"method":"GET","url":{"raw":"{{gatewayUrl}}{{apiContext}}/api/v1/doctors/{{doctorId}}/availability","host":["{{gatewayUrl}}"],"path":["{{apiContext}}","api","v1","doctors","{{doctorId}}","availability"]}}},
+    {"name":"Create appointment","request":{"method":"POST","header":[{"key":"Content-Type","value":"application/json"}],"body":{"mode":"raw","raw":"{\n  \"doctorId\": \"{{doctorId}}\",\n  \"slotId\": \"{{slotId}}\",\n  \"reason\": \"Fictional general consultation\"\n}"},"url":{"raw":"{{gatewayUrl}}{{apiContext}}/api/v1/appointments","host":["{{gatewayUrl}}"],"path":["{{apiContext}}","api","v1","appointments"]}},"event":[{"listen":"test","script":{"exec":["pm.test('creation contract', () => pm.expect(pm.response.code).to.be.oneOf([201,400,401,403,404,409,422,429]));"]}}]},
+    {"name":"Get appointment","request":{"method":"GET","url":{"raw":"{{gatewayUrl}}{{apiContext}}/api/v1/appointments/{{appointmentId}}","host":["{{gatewayUrl}}"],"path":["{{apiContext}}","api","v1","appointments","{{appointmentId}}"]}}},
+    {"name":"My appointments","request":{"method":"GET","url":{"raw":"{{gatewayUrl}}{{apiContext}}/api/v1/patients/me/appointments","host":["{{gatewayUrl}}"],"path":["{{apiContext}}","api","v1","patients","me","appointments"]}}},
+    {"name":"Update appointment","request":{"method":"PATCH","header":[{"key":"Content-Type","value":"application/json"}],"body":{"mode":"raw","raw":"{\"status\":\"cancelled\"}"},"url":{"raw":"{{gatewayUrl}}{{apiContext}}/api/v1/appointments/{{appointmentId}}","host":["{{gatewayUrl}}"],"path":["{{apiContext}}","api","v1","appointments","{{appointmentId}}"]}}},
+    {"name":"Admin appointments","request":{"method":"GET","url":{"raw":"{{gatewayUrl}}{{apiContext}}/api/v1/admin/appointments","host":["{{gatewayUrl}}"],"path":["{{apiContext}}","api","v1","admin","appointments"]}}},
+    {"name":"Admin patients","request":{"method":"GET","url":{"raw":"{{gatewayUrl}}{{apiContext}}/api/v1/admin/patients","host":["{{gatewayUrl}}"],"path":["{{apiContext}}","api","v1","admin","patients"]}}}
+  ]
+}

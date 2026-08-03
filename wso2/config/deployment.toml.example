@@ -1,0 +1,10 @@
+# Example only. Confirm every property name against the installed WSO2 API Manager version.
+# Never place real keystore passwords or other secrets in this repository.
+
+[apim.jwt]
+enable = true
+header = "X-JWT-Assertion"
+
+# WSO2 must remove or overwrite every client-supplied X-JWT-Assertion header.
+# FastAPI validates the assertion signature, algorithm, issuer, audience, expiry,
+# subject, roles, and scopes. Plain identity headers are never trusted.

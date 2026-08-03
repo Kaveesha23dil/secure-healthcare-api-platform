@@ -46,3 +46,9 @@ logs/
 # Docker overrides may contain local secrets
 docker-compose.override.yml
 docker-compose.*.override.yml
+
+# Local WSO2 API Manager runtimes and generated state
+wso2-runtime/
+wso2/**/repository/logs/
+wso2/**/*.jks
+wso2/**/*.keystore

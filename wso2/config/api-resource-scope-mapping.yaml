@@ -1,0 +1,15 @@
+resources:
+  - { method: GET, path: /health, authentication: none }
+  - { method: GET, path: /api/v1/doctors, scope: "doctor:read" }
+  - { method: GET, path: "/api/v1/doctors/{doctorId}", scope: "doctor:read" }
+  - { method: POST, path: /api/v1/doctors, scope: "doctor:write" }
+  - { method: PATCH, path: "/api/v1/doctors/{doctorId}", scope: "doctor:write" }
+  - { method: DELETE, path: "/api/v1/doctors/{doctorId}", scope: "doctor:write" }
+  - { method: GET, path: "/api/v1/doctors/{doctorId}/availability", scope: "availability:read" }
+  - { method: POST, path: "/api/v1/doctors/{doctorId}/availability", scope: "availability:write" }
+  - { method: POST, path: /api/v1/appointments, scope: "appointment:create" }
+  - { method: GET, path: "/api/v1/appointments/{appointmentId}", scope: "appointment:read" }
+  - { method: PATCH, path: "/api/v1/appointments/{appointmentId}", scope: "appointment:update" }
+  - { method: GET, path: /api/v1/patients/me/appointments, scope: "appointment:read" }
+  - { method: GET, path: /api/v1/admin/appointments, scope: "appointment:read:all" }
+  - { method: GET, path: /api/v1/admin/patients, scope: "patient:read" }
