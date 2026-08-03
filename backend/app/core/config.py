@@ -21,6 +21,7 @@ class Settings(BaseSettings):
     app_version: str = "1.0.0"
     app_env: Literal["development", "test", "staging", "production"] = "development"
     app_debug: bool = False
+    auth_mode: Literal["direct_jwt", "wso2_backend_jwt", "test_override"] = "direct_jwt"
     database_url: str = "postgresql+psycopg://healthcare_app:change_me@localhost:5432/healthcare"
     jwt_issuer: str = "https://localhost:9443/oauth2/token"
     jwt_audience: str = "secure-healthcare-api"
@@ -29,6 +30,18 @@ class Settings(BaseSettings):
     allowed_origins: CsvList = ["http://localhost:3000"]
     log_level: str = "INFO"
     access_token_leeway_seconds: int = Field(30, ge=0, le=300)
+    wso2_backend_jwt_header: str = "X-JWT-Assertion"
+    wso2_backend_jwt_issuer: str = "https://localhost:9443/oauth2/token"
+    wso2_backend_jwt_audience: str = "secure-healthcare-api"
+    wso2_backend_jwt_jwks_url: str = "https://localhost:9443/oauth2/jwks"
+    wso2_backend_jwt_algorithms: CsvList = ["RS256"]
+    wso2_backend_jwt_leeway_seconds: int = Field(30, ge=0, le=300)
+    wso2_subject_claim: str = "sub"
+    wso2_scope_claim: str = "scope"
+    wso2_role_claim: str = "roles"
+    trusted_gateway_hosts: CsvList = ["localhost", "127.0.0.1"]
+    trust_proxy_headers: bool = False
+    allow_direct_access: bool = False
     max_page_size: int = Field(100, ge=1, le=1000)
     default_page_size: int = Field(20, ge=1)
     max_request_body_bytes: int = Field(1_048_576, ge=1024)
@@ -43,6 +56,14 @@ class Settings(BaseSettings):
             raise ValueError("Wildcard CORS is prohibited in production")
         if not self.jwt_algorithms or any(a.lower() == "none" for a in self.jwt_algorithms):
             raise ValueError("At least one secure JWT algorithm is required")
+        if not self.wso2_backend_jwt_algorithms or any(
+            a.lower() == "none" for a in self.wso2_backend_jwt_algorithms
+        ):
+            raise ValueError("At least one secure WSO2 backend JWT algorithm is required")
+        if self.app_env != "test" and self.auth_mode == "test_override":
+            raise ValueError("test_override authentication is restricted to APP_ENV=test")
+        if not self.wso2_backend_jwt_header.strip():
+            raise ValueError("WSO2 backend JWT header cannot be empty")
         return self
 
 
