@@ -1,0 +1,10 @@
+roles:
+  patient:
+    scopes: ["doctor:read", "availability:read", "appointment:create", "appointment:read", "appointment:cancel"]
+  doctor:
+    scopes: ["doctor:read", "availability:read", "availability:write", "appointment:read", "appointment:update", "appointment:cancel"]
+  administrator:
+    scopes: ["doctor:read", "doctor:write", "availability:read", "availability:write", "appointment:create", "appointment:read", "appointment:read:all", "appointment:update", "appointment:cancel", "patient:read", "patient:write", "admin:manage"]
+
+# Role and scope names are case-sensitive in this project. Confirm the installed
+# WSO2 user-store and scope-mapping behavior before creating runtime mappings.

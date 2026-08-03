@@ -71,6 +71,10 @@ Booking locks the slot and relies on a PostgreSQL partial unique index so concur
 
 WSO2 API Manager is not installed in this phase. Later it may provide gateway validation, throttling, publication, analytics, and version governance; backend authorization remains mandatory.
 
+### WSO2 backend assertions
+
+Set `AUTH_MODE=wso2_backend_jwt` to require the configured `X-JWT-Assertion` on protected routes. FastAPI validates its signature through JWKS plus algorithm, issuer, audience, expiry/not-before, and configurable subject/role/scope claims. Plain identity headers are ignored. `direct_jwt` remains available for controlled backend development; `test_override` is accepted only with `APP_ENV=test` and an explicit dependency override. See [`../wso2/README.md`](../wso2/README.md).
+
 ## Troubleshooting
 
 - `401`: configure a reachable JWKS endpoint and a correctly issued bearer token, or use test dependency overrides.

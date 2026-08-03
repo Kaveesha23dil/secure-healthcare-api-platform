@@ -1,0 +1,13 @@
+scopes:
+  - { name: "doctor:read", description: "Read doctor information" }
+  - { name: "doctor:write", description: "Create, update, or deactivate doctors" }
+  - { name: "availability:read", description: "Read doctor availability" }
+  - { name: "availability:write", description: "Manage doctor availability" }
+  - { name: "appointment:create", description: "Create appointments" }
+  - { name: "appointment:read", description: "Read permitted appointments" }
+  - { name: "appointment:read:all", description: "Read all appointments" }
+  - { name: "appointment:update", description: "Update permitted appointments" }
+  - { name: "appointment:cancel", description: "Cancel permitted appointments" }
+  - { name: "patient:read", description: "Read permitted patient information" }
+  - { name: "patient:write", description: "Manage permitted patient information" }
+  - { name: "admin:manage", description: "Perform administrative operations" }

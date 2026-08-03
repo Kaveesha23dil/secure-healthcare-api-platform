@@ -1,0 +1,10 @@
+# Demonstration values only; these are not healthcare production sizing recommendations.
+operationLimits:
+  - { method: GET, path: /api/v1/doctors, requests: 100, period: minute }
+  - { method: GET, path: "/api/v1/doctors/{doctorId}/availability", requests: 60, period: minute }
+  - { method: POST, path: /api/v1/appointments, requests: 10, period: minute }
+  - { method: PATCH, path: "/api/v1/appointments/{appointmentId}", requests: 20, period: minute }
+  - { method: GET, path: /api/v1/admin/appointments, requests: 30, period: minute }
+  - { method: GET, path: /api/v1/admin/patients, requests: 30, period: minute }
+
+# Apply these through Publisher/Admin Portal according to the installed APIM version.

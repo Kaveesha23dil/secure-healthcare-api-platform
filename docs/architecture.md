@@ -115,3 +115,34 @@ Gateway access telemetry and FastAPI application logs contain request IDs, route
 ## Future WSO2 integration
 
 Import the OpenAPI contract, replace placeholder authorization/token URLs, map scopes to gateway resources, configure subscriptions and throttling, enforce TLS, remove direct public backend access, propagate verified identity safely, publish lifecycle/version metadata, and enable sanitized analytics. The final topology and claims contract must undergo a security review before deployment.
+
+## WSO2 gateway request flow
+
+```mermaid
+sequenceDiagram
+    participant Client
+    participant WSO2 as WSO2 API Manager
+    participant API as FastAPI
+    participant DB as PostgreSQL
+
+    Client->>WSO2: API request with OAuth access token
+    WSO2->>WSO2: Validate token, subscription, scope and rate limit
+    WSO2->>API: Forward request with signed backend JWT
+    API->>API: Validate backend JWT
+    API->>API: Check scope, role and object ownership
+    API->>DB: Execute authorized operation
+    DB-->>API: Result
+    API-->>WSO2: API response
+    WSO2-->>Client: API response
+```
+
+## Authorization layers after gateway integration
+
+1. The identity provider and WSO2 validate the client's OAuth access token.
+2. WSO2 validates the subscription, operation scope, and throttling policy.
+3. FastAPI validates the WSO2-signed backend assertion's signature, algorithm, issuer, audience, time claims, and configured identity claims.
+4. FastAPI independently checks the operation scope and trusted role.
+5. FastAPI checks patient ownership or doctor assignment and appointment business rules.
+6. PostgreSQL enforces foreign keys, state constraints, and active-slot uniqueness.
+
+The gateway must remove client-supplied assertion and identity headers. FastAPI never trusts plain identity headers or source IP as authentication. In deployment, FastAPI belongs on a private network reachable only by the gateway; signed assertion validation remains required even within that boundary.

@@ -52,3 +52,15 @@ Requirements use **MUST** for mandatory controls and **SHOULD** for recommended 
 4. **Object-level authorization:** checks the subject's relationship to the exact record, such as patient ownership or doctor assignment.
 
 All four layers apply where relevant. A request with a valid token and scope is still denied if its role or object relationship is invalid.
+
+## WSO2 gateway assertion requirements
+
+- In `wso2_backend_jwt` mode, protected routes MUST accept identity only from the configured signed backend assertion header.
+- WSO2 MUST strip or overwrite client-supplied `X-JWT-Assertion` and MUST NOT promote `X-User-ID`, `X-Patient-ID`, `X-Doctor-ID`, `X-Role`, or `X-Scopes` into trusted identity.
+- FastAPI MUST validate assertion signature, algorithm allowlist, issuer, audience, expiration, optional not-before, configured subject/role/scope claim types, and a bounded clock skew.
+- JWKS failure and unknown signing keys MUST fail closed. Key rotation MUST publish overlapping old/new public keys for at least the maximum assertion lifetime.
+- Backend assertions SHOULD be short-lived and protected by TLS to reduce interception and replay risk.
+- Gateway operation-to-scope and role mappings MUST be reviewed against the authored contract and authorization matrix.
+- Backend scope, role, ownership/assignment, transition, and database checks MUST remain enabled after gateway integration.
+- Production-like deployments MUST restrict FastAPI network reachability to WSO2 or an approved internal ingress. Source address is defense in depth, not identity.
+- Gateway and backend logs MUST exclude client tokens, backend assertions, credentials, and sensitive bodies.

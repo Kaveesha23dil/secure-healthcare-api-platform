@@ -1,0 +1,7 @@
+# Compose override for a gateway-only private backend network.
+# Requires Docker Compose support for the !reset merge tag.
+services:
+  api:
+    ports: !reset []
+    expose:
+      - "8000"

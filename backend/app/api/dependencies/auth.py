@@ -4,8 +4,14 @@ from typing import Annotated
 from fastapi import Depends, Request
 from fastapi.security import OAuth2AuthorizationCodeBearer
 
+from app.core.config import get_settings
 from app.core.exceptions import AuthenticationError, AuthorizationError
-from app.core.security import AuthenticatedUser, TokenValidationError, validate_access_token
+from app.core.security import (
+    AuthenticatedUser,
+    TokenValidationError,
+    validate_access_token,
+    validate_wso2_backend_token,
+)
 
 OAUTH_SCOPES = {
     "doctor:read": "Read doctor directory information",
@@ -34,10 +40,26 @@ def get_current_user(
     request: Request,
     token: Annotated[str | None, Depends(oauth2_scheme)],
 ) -> AuthenticatedUser:
-    if token is None:
-        raise AuthenticationError()
+    settings = get_settings()
+    if settings.auth_mode == "test_override":
+        raise AuthenticationError("Test authentication requires an explicit dependency override.")
+    if settings.auth_mode == "wso2_backend_jwt":
+        if not settings.allow_direct_access:
+            source_host = request.client.host if request.client else ""
+            if source_host not in settings.trusted_gateway_hosts:
+                raise AuthenticationError()
+        assertion = request.headers.get(settings.wso2_backend_jwt_header)
+        if not assertion:
+            raise AuthenticationError()
+        validator = validate_wso2_backend_token
+        token_to_validate = assertion
+    else:
+        if token is None:
+            raise AuthenticationError()
+        validator = validate_access_token
+        token_to_validate = token
     try:
-        user = validate_access_token(token)
+        user = validator(token_to_validate, settings)
     except TokenValidationError as exc:
         raise AuthenticationError() from exc
     request.state.actor_subject = user.subject

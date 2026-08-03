@@ -22,12 +22,22 @@ services:
     environment:
       APP_ENV: development
       APP_DEBUG: "false"
+      AUTH_MODE: ${AUTH_MODE:-direct_jwt}
       DATABASE_URL: postgresql+psycopg://healthcare_app:${POSTGRES_PASSWORD:-change_me_for_local_development}@db:5432/${POSTGRES_DB:-healthcare}
       JWT_ISSUER: ${JWT_ISSUER:-https://localhost:9443/oauth2/token}
       JWT_AUDIENCE: ${JWT_AUDIENCE:-secure-healthcare-api}
       JWKS_URL: ${JWKS_URL:-https://localhost:9443/oauth2/jwks}
+      WSO2_BACKEND_JWT_HEADER: ${WSO2_BACKEND_JWT_HEADER:-X-JWT-Assertion}
+      WSO2_BACKEND_JWT_ISSUER: ${WSO2_BACKEND_JWT_ISSUER:-https://localhost:9443/oauth2/token}
+      WSO2_BACKEND_JWT_AUDIENCE: ${WSO2_BACKEND_JWT_AUDIENCE:-secure-healthcare-api}
+      WSO2_BACKEND_JWT_JWKS_URL: ${WSO2_BACKEND_JWT_JWKS_URL:-https://localhost:9443/oauth2/jwks}
+      WSO2_BACKEND_JWT_ALGORITHMS: ${WSO2_BACKEND_JWT_ALGORITHMS:-RS256}
+      TRUSTED_GATEWAY_HOSTS: ${TRUSTED_GATEWAY_HOSTS:-localhost,127.0.0.1}
+      ALLOW_DIRECT_ACCESS: ${ALLOW_DIRECT_ACCESS:-false}
       ALLOWED_ORIGINS: ${ALLOWED_ORIGINS:-http://localhost:3000}
     ports:
+      # Loopback-only development access. Use wso2/config/docker-compose.private.yml
+      # to remove host publication when WSO2 shares the Compose network.
       - "127.0.0.1:${API_PORT:-8000}:8000"
     depends_on:
       db:

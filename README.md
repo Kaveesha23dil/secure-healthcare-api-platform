@@ -1,6 +1,6 @@
 # Secure Healthcare API Platform
 
-> **Current phase:** FastAPI backend development. WSO2 API Manager installation/configuration remains intentionally deferred.
+> **Current phase:** WSO2 API Manager integration assets and signed backend-JWT validation. Portal installation and runtime configuration remain manual.
 
 ## Problem statement
 
@@ -79,6 +79,8 @@ API-first and contract-first design, least privilege, deny by default, defense i
 3. Apply migrations with `docker compose exec api alembic upgrade head`.
 4. Run backend quality checks from `backend/` with `ruff check .`, `mypy app`, and `pytest`.
 5. Validate behavior against `api-spec/healthcare-api.yaml` before integrating WSO2.
+
+WSO2 import assets, scope mappings, smoke tests, and manual setup instructions are in [`wso2/`](wso2/README.md). Gateway validation adds defense in depth; FastAPI continues enforcing verified scopes, roles, object ownership/assignment, and business rules.
 
 ## Roadmap
 
