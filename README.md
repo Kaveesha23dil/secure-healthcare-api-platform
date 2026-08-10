@@ -88,6 +88,10 @@ Pull requests run Ruff, formatting, MyPy, Pytest, OpenAPI and breaking-change va
 
 WSO2 `apictl` credentials come from environment secrets, while backend endpoints and generated API-project paths are environment parameters. See [`apiops/README.md`](apiops/README.md), [`apiops/docs/environment-promotion.md`](apiops/docs/environment-promotion.md), [`docs/github-environments.md`](docs/github-environments.md), and [`docs/deployment-hardening.md`](docs/deployment-hardening.md).
 
+## Web client
+
+The React/TypeScript client uses WSO2 Authorization Code with PKCE for patient, doctor, and administrator UX. Every protected API call targets the WSO2 Gateway; the browser never calls FastAPI directly. Start locally with `cd frontend`, `npm install`, and `npm run dev` after creating a non-secret `.env` from the example. See [`frontend/README.md`](frontend/README.md), [`docs/frontend-authentication.md`](docs/frontend-authentication.md), and [`docs/demo-scenarios.md`](docs/demo-scenarios.md).
+
 ## Roadmap
 
 1. **Foundation (current):** scope, architecture, security design, schema plan, and OpenAPI contract.

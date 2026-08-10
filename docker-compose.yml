@@ -48,5 +48,13 @@ services:
       timeout: 3s
       retries: 5
       start_period: 15s
+  frontend:
+    build:
+      context: ./frontend
+    ports:
+      - "127.0.0.1:${FRONTEND_PORT:-5173}:8080"
+    depends_on:
+      api:
+        condition: service_healthy
 volumes:
   postgres_data:
