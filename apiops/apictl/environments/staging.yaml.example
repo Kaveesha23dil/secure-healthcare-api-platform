@@ -1,0 +1,4 @@
+name: staging
+controlPlane: https://wso2-staging.example.internal
+gateway: https://gateway-staging.example.internal
+backendUrl: https://healthcare-api-staging.internal

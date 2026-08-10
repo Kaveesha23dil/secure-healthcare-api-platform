@@ -1,0 +1,4 @@
+name: development
+controlPlane: https://localhost:9443
+gateway: https://localhost:8243
+backendUrl: http://host.docker.internal:8000
