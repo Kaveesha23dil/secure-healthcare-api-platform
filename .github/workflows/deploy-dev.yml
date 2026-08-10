@@ -1,0 +1,38 @@
+name: Deploy development
+on:
+  push:
+    branches: [develop]
+permissions:
+  contents: read
+concurrency:
+  group: healthcare-api-development
+  cancel-in-progress: false
+jobs:
+  deploy:
+    runs-on: [self-hosted, wso2-development]
+    environment: development
+    env:
+      WSO2_USERNAME: ${{ secrets.WSO2_DEV_USERNAME }}
+      WSO2_PASSWORD: ${{ secrets.WSO2_DEV_PASSWORD }}
+      WSO2_HOST: ${{ secrets.WSO2_DEV_HOST }}
+      WSO2_GATEWAY_URL: ${{ secrets.WSO2_DEV_GATEWAY_URL }}
+      WSO2_ACCESS_TOKEN: ${{ secrets.WSO2_DEV_ACCESS_TOKEN }}
+      WSO2_ENVIRONMENT: development
+      WSO2_API_CONTEXT: /healthcare/1.0.0
+      BACKEND_URL: ${{ vars.BACKEND_URL }}
+      APICTL_API_PROJECT: ${{ vars.APICTL_API_PROJECT }}
+      APICTL_PARAMS_FILE: ${{ vars.APICTL_PARAMS_FILE }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install -e './backend[dev]'
+      - run: python -m ruff check . && python -m ruff format --check .
+        working-directory: backend
+      - run: python -m mypy app && python -m pytest
+        working-directory: backend
+      - shell: pwsh
+        run: ./apiops/scripts/deploy-api-dev.ps1
+      - shell: pwsh
+        run: ./apiops/scripts/gateway-smoke-test.ps1
