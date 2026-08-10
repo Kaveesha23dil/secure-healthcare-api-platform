@@ -166,3 +166,17 @@ flowchart LR
 ```
 
 CI validates backend code, API compatibility, secrets, and the Docker build without deploying pull requests. CD promotes the reviewed API definition through environment-specific WSO2 configuration. Development and staging use internal self-hosted runners because private control planes are not reachable from GitHub-hosted runners. Credentials and endpoints come from protected GitHub Environments or external secret stores. Production remains a manually approved, validation-only placeholder until an actual environment is provisioned.
+
+## Web client and PKCE
+
+```mermaid
+flowchart LR
+    User[Patient / Doctor / Administrator] --> React[React Web Client]
+    React --> Auth[WSO2 Authorization Server]
+    Auth --> React
+    React --> Gateway[WSO2 API Gateway]
+    Gateway --> API[FastAPI]
+    API --> DB[(PostgreSQL)]
+```
+
+React is a public OAuth client using Authorization Code with PKCE S256 and state. It sends access tokens only to the configured gateway context. Frontend role routing improves UX but is not authorization; WSO2 and FastAPI remain the enforcement boundaries. Access tokens are memory-only and browser reload requires reauthentication.
