@@ -82,6 +82,12 @@ API-first and contract-first design, least privilege, deny by default, defense i
 
 WSO2 import assets, scope mappings, smoke tests, and manual setup instructions are in [`wso2/`](wso2/README.md). Gateway validation adds defense in depth; FastAPI continues enforcing verified scopes, roles, object ownership/assignment, and business rules.
 
+## APIOps and CI/CD
+
+Pull requests run Ruff, formatting, MyPy, Pytest, OpenAPI and breaking-change validation, secret checks, and a non-root Docker image build. Merges to `develop` can deploy through a WSO2 development self-hosted runner; staging is manually dispatched and protected by GitHub Environment approval. Production deployment is disabled and validation-only for this demo.
+
+WSO2 `apictl` credentials come from environment secrets, while backend endpoints and generated API-project paths are environment parameters. See [`apiops/README.md`](apiops/README.md), [`apiops/docs/environment-promotion.md`](apiops/docs/environment-promotion.md), [`docs/github-environments.md`](docs/github-environments.md), and [`docs/deployment-hardening.md`](docs/deployment-hardening.md).
+
 ## Roadmap
 
 1. **Foundation (current):** scope, architecture, security design, schema plan, and OpenAPI contract.

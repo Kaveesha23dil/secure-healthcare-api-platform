@@ -1,0 +1,25 @@
+name: Validate production candidate
+on:
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  validate-only:
+    runs-on: ubuntu-latest
+    environment: production
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: '3.12'
+      - run: python -m pip install -e './backend[dev]'
+      - run: python -m ruff check .
+        working-directory: backend
+      - run: python -m ruff format --check .
+        working-directory: backend
+      - run: python -m mypy app
+        working-directory: backend
+      - run: python -m pytest
+        working-directory: backend
+      - run: python apiops/scripts/api_contract_checks.py validate
+      - run: echo 'Production deployment is not active for the student/demo project.'

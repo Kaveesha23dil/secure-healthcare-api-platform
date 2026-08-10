@@ -4,8 +4,12 @@ info:
   version: 1.0.0
   description: Contract-first educational appointment API using fictional data only; no FHIR or regulatory compliance is claimed.
 servers:
-  - url: http://host.docker.internal:8000
-    description: Configurable FastAPI backend placeholder for local WSO2 import
+  - url: "{backendUrl}"
+    description: Deployment-parameterized FastAPI backend
+    variables:
+      backendUrl:
+        default: http://host.docker.internal:8000
+        description: Override through APIOps deployment parameters for each environment
 x-wso2-basePath: /healthcare/1.0.0
 paths:
   /health:
