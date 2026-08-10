@@ -146,3 +146,23 @@ sequenceDiagram
 6. PostgreSQL enforces foreign keys, state constraints, and active-slot uniqueness.
 
 The gateway must remove client-supplied assertion and identity headers. FastAPI never trusts plain identity headers or source IP as authentication. In deployment, FastAPI belongs on a private network reachable only by the gateway; signed assertion validation remains required even within that boundary.
+
+## CI/CD and environment promotion
+
+```mermaid
+flowchart LR
+    Developer --> GitHub
+    GitHub --> CI
+    CI --> Tests
+    CI --> OpenAPIValidation
+    CI --> DockerBuild
+    GitHub --> DevDeploy
+    DevDeploy --> WSO2Dev
+    WSO2Dev --> FastAPIDev
+    GitHub --> Approval
+    Approval --> StagingDeploy
+    StagingDeploy --> WSO2Staging
+    WSO2Staging --> FastAPIStaging
+```
+
+CI validates backend code, API compatibility, secrets, and the Docker build without deploying pull requests. CD promotes the reviewed API definition through environment-specific WSO2 configuration. Development and staging use internal self-hosted runners because private control planes are not reachable from GitHub-hosted runners. Credentials and endpoints come from protected GitHub Environments or external secret stores. Production remains a manually approved, validation-only placeholder until an actual environment is provisioned.
