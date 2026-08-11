@@ -99,6 +99,10 @@ The React/TypeScript client uses WSO2 Authorization Code with PKCE for patient, 
 3. **Gateway:** WSO2 publication, OAuth/OIDC integration, policies, throttling, versioning, and analytics.
 4. **Hardening:** security testing, observability, operational runbooks, and controlled deprecation exercises.
 
+## End-to-end security validation
+
+The `e2e/` Playwright project has a CI-safe routing check and opt-in real-WSO2 tests for OAuth login, role routing, object isolation, gateway-only requests, conflicts, throttling, and request IDs. Real tests require fictional identities and a private configured environment and skip clearly when prerequisites are absent. See [`e2e/README.md`](e2e/README.md), [`docs/e2e-test-plan.md`](docs/e2e-test-plan.md), and [`docs/final-security-validation.md`](docs/final-security-validation.md).
+
 ## API documentation
 
 The source of truth is [`api-spec/healthcare-api.yaml`](api-spec/healthcare-api.yaml). API conventions are defined in [`docs/api-conventions.md`](docs/api-conventions.md).

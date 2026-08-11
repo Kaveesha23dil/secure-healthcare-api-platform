@@ -40,3 +40,44 @@ jobs:
       - run: docker build -t secure-healthcare-api:ci ./backend
       - name: Verify image user
         run: test "$(docker image inspect secure-healthcare-api:ci --format '{{.Config.User}}')" = api
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+          cache: npm
+          cache-dependency-path: |
+            frontend/package-lock.json
+            e2e/package-lock.json
+      - run: npm ci
+        working-directory: frontend
+      - run: npm run lint
+        working-directory: frontend
+      - run: npm run typecheck
+        working-directory: frontend
+      - run: npm test
+        working-directory: frontend
+      - run: npm run build
+        working-directory: frontend
+        env:
+          VITE_WSO2_AUTHORIZATION_URL: https://wso2.invalid/oauth2/authorize
+          VITE_WSO2_TOKEN_URL: https://wso2.invalid/oauth2/token
+          VITE_WSO2_LOGOUT_URL: https://wso2.invalid/oidc/logout
+          VITE_WSO2_CLIENT_ID: ci-public-client
+          VITE_OAUTH_REDIRECT_URI: http://127.0.0.1:5173/auth/callback
+          VITE_OAUTH_POST_LOGOUT_REDIRECT_URI: http://127.0.0.1:5173/login
+          VITE_OAUTH_SCOPES: openid profile roles
+          VITE_WSO2_GATEWAY_URL: https://gateway.invalid
+          VITE_WSO2_API_CONTEXT: /healthcare/1.0.0
+      - run: npm ci
+        working-directory: e2e
+      - run: npx playwright install --with-deps chromium
+        working-directory: e2e
+      - run: npm test
+        working-directory: e2e
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: playwright-ci-evidence
+          path: |
+            e2e/playwright-report/
+            e2e/test-results/
+          if-no-files-found: ignore
