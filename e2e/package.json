@@ -1,0 +1,19 @@
+{
+  "name": "secure-healthcare-e2e",
+  "private": true,
+  "version": "1.0.0",
+  "scripts": {
+    "test": "playwright test --grep @ci",
+    "test:wso2": "playwright test --grep @wso2",
+    "test:all": "playwright test",
+    "test:headed": "playwright test --headed",
+    "typecheck": "tsc --noEmit",
+    "report": "playwright show-report"
+  },
+  "devDependencies": {
+    "@playwright/test": "^1.54.2",
+    "@types/node": "^22.16.5",
+    "dotenv": "^17.2.1",
+    "typescript": "^5.8.3"
+  }
+}

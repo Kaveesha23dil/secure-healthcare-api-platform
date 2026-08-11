@@ -180,3 +180,9 @@ flowchart LR
 ```
 
 React is a public OAuth client using Authorization Code with PKCE S256 and state. It sends access tokens only to the configured gateway context. Frontend role routing improves UX but is not authorization; WSO2 and FastAPI remain the enforcement boundaries. Access tokens are memory-only and browser reload requires reauthentication.
+
+## End-to-end validation and observability
+
+Playwright drives Chromium through the production PKCE flow and observes requests at the browser boundary. Authenticated tests target the WSO2 context; probes cover missing tokens, forged headers, roles, object isolation, conflicts, throttling, and request IDs. CI runs only the browser-safe subset on hosted runners. Real WSO2 tests need a trusted self-hosted or manual environment.
+
+FastAPI request IDs and domain audit events are application correlation points. Correlation is not verified until one safe ID is observed in WSO2 telemetry, FastAPI logs, and audit storage. See [observability.md](observability.md) and [e2e-test-plan.md](e2e-test-plan.md).
