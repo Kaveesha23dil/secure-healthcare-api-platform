@@ -10,6 +10,7 @@ import yaml
 
 ROOT = Path(__file__).resolve().parents[2]
 METHODS = {"get", "post", "put", "patch", "delete", "options", "head", "trace"}
+RESPONSE_FIELDS = {"description", "headers", "content", "links"}
 EXPECTED_SCOPES = {
     item["name"]
     for item in yaml.safe_load((ROOT / "wso2/config/scopes.yaml").read_text(encoding="utf-8"))[
@@ -52,6 +53,17 @@ def resolve_refs(document: dict[str, Any]) -> None:
     walk(document)
 
 
+def validate_component_responses(document: dict[str, Any], name: str) -> None:
+    responses = document.get("components", {}).get("responses", {})
+    for response_name, response in responses.items():
+        unexpected = set(response) - RESPONSE_FIELDS
+        if unexpected:
+            fields = ", ".join(sorted(unexpected))
+            raise ValueError(f"{name}: response {response_name} has unexpected fields: {fields}")
+        if not response.get("description"):
+            raise ValueError(f"{name}: response {response_name} requires a description")
+
+
 def validate() -> None:
     source = load(ROOT / "api-spec/healthcare-api.yaml")
     gateway = load(ROOT / "wso2/api/healthcare-api-wso2.yaml")
@@ -65,6 +77,7 @@ def validate() -> None:
         if any(not item for item in ids) or len(ids) != len(set(ids)):
             raise ValueError(f"{name}: operationId values must be present and unique")
         resolve_refs(document)
+        validate_component_responses(document, name)
     text = (ROOT / "wso2/api/healthcare-api-wso2.yaml").read_text(encoding="utf-8")
     if text.count("\n  schemas:") != 1:
         raise ValueError("gateway: exactly one components.schemas section is required")
