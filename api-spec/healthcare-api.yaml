@@ -21,6 +21,7 @@ paths:
             application/json:
               schema: { $ref: '#/components/schemas/HealthResponse' }
               example: { status: ok }
+        '429': { $ref: '#/components/responses/TooManyRequests' }
         '500': { $ref: '#/components/responses/InternalError' }
   /api/v1/doctors:
     get:
@@ -371,8 +372,31 @@ components:
     Unauthorized: { description: Missing or invalid authentication., content: { application/problem+json: { schema: { $ref: '#/components/schemas/ProblemDetails' }, example: { type: 'https://api.example.com/problems/authentication-required', title: Authentication required, status: 401, detail: Valid authentication is required., traceId: 4de6527d-9ea7-471a-84bc-3b87eaef2164 } } } }
     Forbidden: { description: Authenticated subject lacks functional permission., content: { application/problem+json: { schema: { $ref: '#/components/schemas/ProblemDetails' }, example: { type: 'https://api.example.com/problems/forbidden', title: Forbidden, status: 403, detail: The operation is not permitted., traceId: 4de6527d-9ea7-471a-84bc-3b87eaef2164 } } } }
     NotFound: { description: Resource is absent or inaccessible; ownership is never disclosed., content: { application/problem+json: { schema: { $ref: '#/components/schemas/ProblemDetails' }, example: { type: 'https://api.example.com/problems/not-found', title: Resource not found, status: 404, detail: The requested resource does not exist or is not accessible., traceId: 4de6527d-9ea7-471a-84bc-3b87eaef2164 } } } }
-    Conflict: { description: Duplicate booking, idempotency mismatch, or state conflict., content: { application/problem+json: { schema: { $ref: '#/components/schemas/ProblemDetails' }, example: { type: 'https://api.example.com/problems/conflict', title: Conflict, status: 409, detail: The request conflicts with current resource state., traceId: 4de6527d-9ea7-471a-84bc-3b87eaef2164 } } } }
-    ValidationError: { description: Schema validation failed., content: { application/problem+json: { schema: { $ref: '#/components/schemas/ValidationProblemDetails' }, example: { type: 'https://api.example.com/problems/validation', title: Validation failed, status: 422, detail: One or more fields are invalid., traceId: 4de6527d-9ea7-471a-84bc-3b87eaef2164, errors: [{ field: reason, message: Must not exceed 500 characters. }] } } } }
+    Conflict:
+      description: 'Duplicate booking, idempotency mismatch, or state conflict.'
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/ProblemDetails' }
+          example:
+            type: https://api.example.com/problems/conflict
+            title: Conflict
+            status: 409
+            detail: The request conflicts with current resource state.
+            traceId: 4de6527d-9ea7-471a-84bc-3b87eaef2164
+    ValidationError:
+      description: Schema validation failed.
+      content:
+        application/problem+json:
+          schema: { $ref: '#/components/schemas/ValidationProblemDetails' }
+          example:
+            type: https://api.example.com/problems/validation
+            title: Validation failed
+            status: 422
+            detail: One or more fields are invalid.
+            traceId: 4de6527d-9ea7-471a-84bc-3b87eaef2164
+            errors:
+              - field: reason
+                message: Must not exceed 500 characters.
     TooManyRequests: { description: Request rate or quota exceeded., content: { application/problem+json: { schema: { $ref: '#/components/schemas/ProblemDetails' }, example: { type: 'https://api.example.com/problems/rate-limit', title: Too many requests, status: 429, detail: The request rate limit was exceeded., traceId: 4de6527d-9ea7-471a-84bc-3b87eaef2164 } } } }
     InternalError: { description: Unexpected error; no stack trace or internal details., content: { application/problem+json: { schema: { $ref: '#/components/schemas/ProblemDetails' }, example: { type: 'https://api.example.com/problems/internal-error', title: Internal server error, status: 500, detail: An unexpected error occurred., traceId: 4de6527d-9ea7-471a-84bc-3b87eaef2164 } } } }
   schemas:
@@ -382,7 +406,15 @@ components:
       required: [id, displayName, specialization, clinicName]
       properties: { id: { type: string, format: uuid }, displayName: { type: string, minLength: 1, maxLength: 120 }, specialization: { type: string, minLength: 1, maxLength: 100 }, clinicName: { type: string, minLength: 1, maxLength: 160 } }
     Doctor:
-      allOf: [{ $ref: '#/components/schemas/DoctorSummary' }, { type: object, additionalProperties: false, required: [active], properties: { active: { type: boolean } } }]
+      type: object
+      additionalProperties: false
+      required: [id, displayName, specialization, clinicName, active]
+      properties:
+        id: { type: string, format: uuid }
+        displayName: { type: string, minLength: 1, maxLength: 120 }
+        specialization: { type: string, minLength: 1, maxLength: 100 }
+        clinicName: { type: string, minLength: 1, maxLength: 160 }
+        active: { type: boolean }
     CreateDoctorRequest:
       type: object
       additionalProperties: false
@@ -421,25 +453,67 @@ components:
       description: 'Role-aware transitions: patient proposed/booked to cancelled; assigned doctor or administrator proposed to booked, booked to checked-in/no-show/cancelled, checked-in to completed; terminal states cannot reopen.'
       required: [status]
       properties: { status: { $ref: '#/components/schemas/AppointmentStatus' } }
-    PaginationMetadata:
+    PaginatedDoctorResponse:
       type: object
       additionalProperties: false
-      required: [page, size, totalItems, totalPages]
-      properties: { page: { type: integer, minimum: 1 }, size: { type: integer, minimum: 1, maximum: 100 }, totalItems: { type: integer, minimum: 0 }, totalPages: { type: integer, minimum: 0 } }
-    PaginatedDoctorResponse: { allOf: [{ $ref: '#/components/schemas/PaginationMetadata' }, { type: object, additionalProperties: false, required: [items], properties: { items: { type: array, items: { $ref: '#/components/schemas/DoctorSummary' } } } }] }
-    PaginatedAvailabilityResponse: { allOf: [{ $ref: '#/components/schemas/PaginationMetadata' }, { type: object, additionalProperties: false, required: [items], properties: { items: { type: array, items: { $ref: '#/components/schemas/AvailabilitySlot' } } } }] }
-    PaginatedAppointmentResponse: { allOf: [{ $ref: '#/components/schemas/PaginationMetadata' }, { type: object, additionalProperties: false, required: [items], properties: { items: { type: array, items: { $ref: '#/components/schemas/Appointment' } } } }] }
+      required: [page, size, totalItems, totalPages, items]
+      properties:
+        page: { type: integer, minimum: 1 }
+        size: { type: integer, minimum: 1, maximum: 100 }
+        totalItems: { type: integer, minimum: 0 }
+        totalPages: { type: integer, minimum: 0 }
+        items: { type: array, items: { $ref: '#/components/schemas/DoctorSummary' } }
+    PaginatedAvailabilityResponse:
+      type: object
+      additionalProperties: false
+      required: [page, size, totalItems, totalPages, items]
+      properties:
+        page: { type: integer, minimum: 1 }
+        size: { type: integer, minimum: 1, maximum: 100 }
+        totalItems: { type: integer, minimum: 0 }
+        totalPages: { type: integer, minimum: 0 }
+        items: { type: array, items: { $ref: '#/components/schemas/AvailabilitySlot' } }
+    PaginatedAppointmentResponse:
+      type: object
+      additionalProperties: false
+      required: [page, size, totalItems, totalPages, items]
+      properties:
+        page: { type: integer, minimum: 1 }
+        size: { type: integer, minimum: 1, maximum: 100 }
+        totalItems: { type: integer, minimum: 0 }
+        totalPages: { type: integer, minimum: 0 }
+        items: { type: array, items: { $ref: '#/components/schemas/Appointment' } }
     PatientSummary:
       type: object
       additionalProperties: false
       required: [id, displayName, maskedEmail, status]
       properties: { id: { type: string, format: uuid }, displayName: { type: string, maxLength: 120 }, maskedEmail: { type: string, maxLength: 254 }, status: { type: string, enum: [active, disabled] } }
-    PaginatedPatientResponse: { allOf: [{ $ref: '#/components/schemas/PaginationMetadata' }, { type: object, additionalProperties: false, required: [items], properties: { items: { type: array, items: { $ref: '#/components/schemas/PatientSummary' } } } }] }
+    PaginatedPatientResponse:
+      type: object
+      additionalProperties: false
+      required: [page, size, totalItems, totalPages, items]
+      properties:
+        page: { type: integer, minimum: 1 }
+        size: { type: integer, minimum: 1, maximum: 100 }
+        totalItems: { type: integer, minimum: 0 }
+        totalPages: { type: integer, minimum: 0 }
+        items: { type: array, items: { $ref: '#/components/schemas/PatientSummary' } }
     ProblemDetails:
       type: object
       additionalProperties: false
       required: [type, title, status, detail, traceId]
       properties: { type: { type: string, format: uri }, title: { type: string }, status: { type: integer, minimum: 400, maximum: 599 }, detail: { type: string }, instance: { type: string, format: uri-reference }, traceId: { type: string, format: uuid } }
     ValidationErrorItem: { type: object, additionalProperties: false, required: [field, message], properties: { field: { type: string }, message: { type: string } } }
-    ValidationProblemDetails: { allOf: [{ $ref: '#/components/schemas/ProblemDetails' }, { type: object, additionalProperties: false, required: [errors], properties: { errors: { type: array, minItems: 1, items: { $ref: '#/components/schemas/ValidationErrorItem' } } } }] }
+    ValidationProblemDetails:
+      type: object
+      additionalProperties: false
+      required: [type, title, status, detail, traceId, errors]
+      properties:
+        type: { type: string, format: uri }
+        title: { type: string }
+        status: { type: integer, minimum: 400, maximum: 599 }
+        detail: { type: string }
+        instance: { type: string, format: uri-reference }
+        traceId: { type: string, format: uuid }
+        errors: { type: array, minItems: 1, items: { $ref: '#/components/schemas/ValidationErrorItem' } }
     HealthResponse: { type: object, additionalProperties: false, required: [status], properties: { status: { type: string, enum: [ok] } } }

@@ -51,6 +51,15 @@ def test_wso2_contract_preserves_paths_operations_and_resolves_refs() -> None:
             current = current[part.replace("~1", "/").replace("~0", "~")]
 
 
+def test_component_responses_only_use_openapi_response_fields() -> None:
+    allowed = {"description", "headers", "content", "links"}
+    for relative in ("api-spec/healthcare-api.yaml", "wso2/api/healthcare-api-wso2.yaml"):
+        document = load(relative)
+        for response in document["components"]["responses"].values():
+            assert set(response) <= allowed
+            assert response["description"]
+
+
 def test_scope_and_resource_mappings_match_contract() -> None:
     wso2 = load("wso2/api/healthcare-api-wso2.yaml")
     declared = {item["name"] for item in load("wso2/config/scopes.yaml")["scopes"]}
