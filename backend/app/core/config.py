@@ -29,23 +29,23 @@ class Settings(BaseSettings):
     jwt_algorithms: CsvList = ["RS256"]
     allowed_origins: CsvList = ["http://localhost:3000"]
     log_level: str = "INFO"
-    access_token_leeway_seconds: int = Field(30, ge=0, le=300)
+    access_token_leeway_seconds: int = Field(default=30, ge=0, le=300)
     wso2_backend_jwt_header: str = "X-JWT-Assertion"
     wso2_backend_jwt_issuer: str = "wso2.org/products/am"
     wso2_backend_jwt_audience: str = ""
     wso2_backend_jwt_jwks_url: str = "https://localhost:8243/jwks"
     wso2_backend_jwt_public_key_path: str = ""
     wso2_backend_jwt_algorithms: CsvList = ["RS256"]
-    wso2_backend_jwt_leeway_seconds: int = Field(30, ge=0, le=300)
+    wso2_backend_jwt_leeway_seconds: int = Field(default=30, ge=0, le=300)
     wso2_subject_claim: str = "sub"
     wso2_scope_claim: str = "scope"
     wso2_role_claim: str = "roles"
     trusted_gateway_hosts: CsvList = ["localhost", "127.0.0.1"]
     trust_proxy_headers: bool = False
     allow_direct_access: bool = False
-    max_page_size: int = Field(100, ge=1, le=1000)
-    default_page_size: int = Field(20, ge=1)
-    max_request_body_bytes: int = Field(1_048_576, ge=1024)
+    max_page_size: int = Field(default=100, ge=1, le=1000)
+    default_page_size: int = Field(default=20, ge=1)
+    max_request_body_bytes: int = Field(default=1_048_576, ge=1024)
 
     @model_validator(mode="after")
     def secure_production(self) -> "Settings":

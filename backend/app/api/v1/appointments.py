@@ -8,7 +8,11 @@ from app.api.dependencies.database import DbSession
 from app.core.security import AuthenticatedUser
 from app.models.appointment import Appointment as AppointmentModel
 from app.schemas.appointment import Appointment as AppointmentSchema
-from app.schemas.appointment import CreateAppointmentRequest, UpdateAppointmentRequest
+from app.schemas.appointment import (
+    AppointmentStatus,
+    CreateAppointmentRequest,
+    UpdateAppointmentRequest,
+)
 from app.services.appointment_service import AppointmentService
 
 router = APIRouter(prefix="/appointments", tags=["Appointments"])
@@ -22,7 +26,7 @@ def as_schema(item: AppointmentModel) -> AppointmentSchema:
         start_time=item.slot.start_time,
         end_time=item.slot.end_time,
         reason=item.reason,
-        status=item.status,
+        status=AppointmentStatus(item.status),
         created_at=item.created_at,
         updated_at=item.updated_at,
     )
