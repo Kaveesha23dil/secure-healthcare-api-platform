@@ -2,11 +2,16 @@ from pydantic import BaseModel, ConfigDict, Field
 
 
 class ApiModel(BaseModel):
-    model_config = ConfigDict(populate_by_name=True, from_attributes=True)
+    model_config = ConfigDict(validate_by_name=True, validate_by_alias=True, from_attributes=True)
 
 
 class StrictApiModel(ApiModel):
-    model_config = ConfigDict(populate_by_name=True, from_attributes=True, extra="forbid")
+    model_config = ConfigDict(
+        validate_by_name=True,
+        validate_by_alias=True,
+        from_attributes=True,
+        extra="forbid",
+    )
 
 
 class PaginationMetadata(ApiModel):
