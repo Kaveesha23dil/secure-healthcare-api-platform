@@ -70,4 +70,30 @@ Rate-limit testing additionally requires `CONFIRM_RATE_LIMIT_TEST=true` and uses
 - Confirm clock synchronization, issuer/audience spelling, `kid`, JWKS reachability, TLS trust, and gateway header overwrite behavior.
 - Never “fix” connectivity by trusting plain identity headers or disabling cryptographic validation.
 
+## Backend assertion verification
+
+WSO2 validates the client OAuth token and operation scope first. With `[apim.jwt]`
+enabled, the Classic Gateway then signs `X-JWT-Assertion`. FastAPI verifies that
+signature and the assertion expiry before creating `AuthenticatedUser`; existing
+scope, role, ownership, and assignment dependencies run afterward.
+
+The maintained production option is `WSO2_BACKEND_JWT_JWKS_URL`, whose super-tenant
+endpoint is `https://<gateway-host>:8243/jwks`. TLS verification is never disabled.
+For local WSO2 with its self-signed certificate, export only the public signing
+certificate, mount it read-only, and set `WSO2_BACKEND_JWT_PUBLIC_KEY_PATH` instead.
+Never copy a keystore or private key into this repository or container.
+
+WSO2's standard generator uses issuer `wso2.org/products/am` and does not include
+an `aud` claim by default. Leave `WSO2_BACKEND_JWT_AUDIENCE` empty only for that
+standard generator; configure it when a custom generator emits an audience. Claim
+names remain configurable because Key Manager and claim-dialect choices can change
+them. Determine names from a locally decoded payload without recording the token.
+
+Safe local flow:
+
+```text
+OAuth access token -> WSO2 token/scope validation -> signed X-JWT-Assertion
+  -> FastAPI signature/issuer/expiry verification -> principal -> authorization
+```
+
 No end-to-end WSO2 gateway claim is valid until a real request successfully traverses WSO2, FastAPI, PostgreSQL, and back.

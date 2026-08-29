@@ -1,3 +1,4 @@
+import logging
 from collections.abc import Callable
 from typing import Annotated
 
@@ -12,6 +13,8 @@ from app.core.security import (
     validate_access_token,
     validate_wso2_backend_token,
 )
+
+logger = logging.getLogger(__name__)
 
 OAUTH_SCOPES = {
     "doctor:read": "Read doctor directory information",
@@ -47,10 +50,13 @@ def get_current_user(
         if not settings.allow_direct_access:
             source_host = request.client.host if request.client else ""
             if source_host not in settings.trusted_gateway_hosts:
+                logger.debug("WSO2 backend JWT rejected: untrusted network peer")
                 raise AuthenticationError()
         assertion = request.headers.get(settings.wso2_backend_jwt_header)
         if not assertion:
+            logger.debug("WSO2 backend JWT missing")
             raise AuthenticationError()
+        logger.debug("WSO2 backend JWT received")
         validator = validate_wso2_backend_token
         token_to_validate = assertion
     else:
@@ -61,7 +67,21 @@ def get_current_user(
     try:
         user = validator(token_to_validate, settings)
     except TokenValidationError as exc:
+        logger.debug(
+            "JWT authentication rejected",
+            extra={"failure_type": type(exc.__cause__ or exc).__name__},
+        )
         raise AuthenticationError() from exc
+    if settings.auth_mode == "wso2_backend_jwt":
+        logger.debug(
+            "WSO2 backend JWT verified; principal extracted",
+            extra={
+                "scope_count": len(user.scopes),
+                "role_count": len(user.roles),
+                "issuer_checked": bool(settings.wso2_backend_jwt_issuer),
+                "audience_checked": bool(settings.wso2_backend_jwt_audience),
+            },
+        )
     request.state.actor_subject = user.subject
     request.state.actor_role = user.primary_role
     return user

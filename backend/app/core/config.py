@@ -31,9 +31,10 @@ class Settings(BaseSettings):
     log_level: str = "INFO"
     access_token_leeway_seconds: int = Field(30, ge=0, le=300)
     wso2_backend_jwt_header: str = "X-JWT-Assertion"
-    wso2_backend_jwt_issuer: str = "https://localhost:9443/oauth2/token"
-    wso2_backend_jwt_audience: str = "secure-healthcare-api"
-    wso2_backend_jwt_jwks_url: str = "https://localhost:9443/oauth2/jwks"
+    wso2_backend_jwt_issuer: str = "wso2.org/products/am"
+    wso2_backend_jwt_audience: str = ""
+    wso2_backend_jwt_jwks_url: str = "https://localhost:8243/jwks"
+    wso2_backend_jwt_public_key_path: str = ""
     wso2_backend_jwt_algorithms: CsvList = ["RS256"]
     wso2_backend_jwt_leeway_seconds: int = Field(30, ge=0, le=300)
     wso2_subject_claim: str = "sub"
@@ -64,6 +65,14 @@ class Settings(BaseSettings):
             raise ValueError("test_override authentication is restricted to APP_ENV=test")
         if not self.wso2_backend_jwt_header.strip():
             raise ValueError("WSO2 backend JWT header cannot be empty")
+        if self.auth_mode == "wso2_backend_jwt":
+            if not self.wso2_backend_jwt_public_key_path and not self.wso2_backend_jwt_jwks_url:
+                raise ValueError("A trusted WSO2 public key or JWKS URL is required")
+            if any(
+                a not in {"RS256", "RS384", "RS512", "ES256", "ES384", "ES512"}
+                for a in self.wso2_backend_jwt_algorithms
+            ):
+                raise ValueError("WSO2 assertions require an asymmetric signing algorithm")
         return self
 
 

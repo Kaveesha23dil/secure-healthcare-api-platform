@@ -4,6 +4,7 @@ from types import SimpleNamespace
 import jwt
 import pytest
 from cryptography.hazmat.primitives.asymmetric import rsa
+from cryptography.hazmat.primitives.serialization import Encoding, PublicFormat
 from fastapi.testclient import TestClient
 
 from app.core.config import Settings
@@ -18,6 +19,7 @@ def wso2_settings(**overrides: object) -> Settings:
         "wso2_backend_jwt_issuer": "https://wso2.example.invalid",
         "wso2_backend_jwt_audience": "secure-healthcare-api",
         "wso2_backend_jwt_jwks_url": "https://wso2.example.invalid/jwks",
+        "wso2_backend_jwt_public_key_path": "",
         "wso2_backend_jwt_algorithms": ["RS256"],
         "wso2_backend_jwt_leeway_seconds": 0,
     }
@@ -102,6 +104,35 @@ def test_unsupported_and_unsigned_algorithms_are_rejected(signing_key) -> None:
     for token in (unsupported, unsigned):
         with pytest.raises(TokenValidationError):
             validate_wso2_backend_token(token, wso2_settings())
+
+
+def test_malformed_and_invalid_signature_are_rejected(signing_key, monkeypatch) -> None:
+    with pytest.raises(TokenValidationError):
+        validate_wso2_backend_token("not-a-jwt", wso2_settings())
+    wrong_public_key = rsa.generate_private_key(public_exponent=65537, key_size=2048).public_key()
+    monkeypatch.setattr(
+        "app.core.security._jwks_client",
+        lambda _url: SimpleNamespace(
+            get_signing_key_from_jwt=lambda _token: SimpleNamespace(key=wrong_public_key)
+        ),
+    )
+    with pytest.raises(TokenValidationError):
+        validate_wso2_backend_token(assertion(signing_key), wso2_settings())
+
+
+def test_local_public_key_file_verifies_assertion(signing_key, tmp_path) -> None:
+    key_path = tmp_path / "wso2-public.pem"
+    key_path.write_bytes(
+        signing_key.public_key().public_bytes(Encoding.PEM, PublicFormat.SubjectPublicKeyInfo)
+    )
+    actor = validate_wso2_backend_token(
+        assertion(signing_key),
+        wso2_settings(
+            wso2_backend_jwt_public_key_path=str(key_path),
+            wso2_backend_jwt_jwks_url="",
+        ),
+    )
+    assert actor.subject == "patient-a"
 
 
 def test_missing_assertion_and_forged_identity_headers_do_not_grant_access(
