@@ -4,6 +4,8 @@
 [apim.jwt]
 enable = true
 header = "X-JWT-Assertion"
+encoding = "base64url"
+signing_algorithm = "SHA256withRSA"
 
 # WSO2 must remove or overwrite every client-supplied X-JWT-Assertion header.
 # FastAPI validates the assertion signature, algorithm, issuer, audience, expiry,

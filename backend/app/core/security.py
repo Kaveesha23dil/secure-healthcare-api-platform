@@ -1,7 +1,11 @@
 from dataclasses import dataclass
 from functools import lru_cache
+from pathlib import Path
+from typing import Any
 
 import jwt
+from cryptography import x509
+from cryptography.hazmat.primitives.serialization import load_pem_public_key
 from jwt import PyJWKClient
 
 from app.core.config import Settings, get_settings
@@ -56,6 +60,8 @@ def validate_wso2_backend_token(token: str, settings: Settings | None = None) ->
         subject_claim=cfg.wso2_subject_claim,
         role_claim=cfg.wso2_role_claim,
         scope_claim=cfg.wso2_scope_claim,
+        public_key_path=cfg.wso2_backend_jwt_public_key_path,
+        optional_claim_checks=True,
     )
 
 
@@ -82,6 +88,8 @@ def _validate_token(
     subject_claim: str,
     role_claim: str,
     scope_claim: str,
+    public_key_path: str = "",
+    optional_claim_checks: bool = False,
 ) -> AuthenticatedUser:
     try:
         header = jwt.get_unverified_header(token)
@@ -92,15 +100,29 @@ def _validate_token(
             or algorithm not in algorithms
         ):
             raise TokenValidationError("Token algorithm is not allowed")
-        signing_key = _jwks_client(jwks_url).get_signing_key_from_jwt(token)
+        if public_key_path:
+            pem = Path(public_key_path).read_bytes()
+            if b"-----BEGIN CERTIFICATE-----" in pem:
+                key: Any = x509.load_pem_x509_certificate(pem).public_key()
+            else:
+                key = load_pem_public_key(pem)
+        else:
+            key = _jwks_client(jwks_url).get_signing_key_from_jwt(token).key
+        check_issuer = bool(issuer) or not optional_claim_checks
+        check_audience = bool(audience) or not optional_claim_checks
+        required = ["exp", subject_claim]
+        if check_issuer:
+            required.append("iss")
+        if check_audience:
+            required.append("aud")
         payload = jwt.decode(
             token,
-            signing_key.key,
+            key,
             algorithms=algorithms,
             issuer=issuer,
             audience=audience,
             leeway=leeway,
-            options={"require": ["exp", "iss", "aud", subject_claim]},
+            options={"require": required, "verify_iss": check_issuer, "verify_aud": check_audience},
         )
     except (jwt.PyJWTError, ValueError, OSError, TokenValidationError) as exc:
         raise TokenValidationError("Access token validation failed") from exc
@@ -109,8 +131,8 @@ def _validate_token(
         raise TokenValidationError("Access token subject is invalid")
     roles = _string_set(payload.get(role_claim, []), role_claim, split_whitespace=False)
     scopes = _string_set(payload.get(scope_claim, []), scope_claim, split_whitespace=True)
-    token_issuer = payload.get("iss")
-    raw_audience = payload.get("aud")
+    token_issuer = payload.get("iss", "")
+    raw_audience = payload.get("aud", [])
     if not isinstance(token_issuer, str):
         raise TokenValidationError("Token issuer claim is invalid")
     audiences = _string_set(raw_audience, "aud", split_whitespace=False)

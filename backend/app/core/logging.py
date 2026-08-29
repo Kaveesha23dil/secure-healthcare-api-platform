@@ -20,6 +20,11 @@ class JsonFormatter(logging.Formatter):
             "actor_subject",
             "resource_type",
             "result",
+            "failure_type",
+            "scope_count",
+            "role_count",
+            "issuer_checked",
+            "audience_checked",
         ):
             value = getattr(record, key, None)
             if value is not None:
