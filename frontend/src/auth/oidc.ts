@@ -4,9 +4,26 @@ import type { AuthenticatedUser, TokenResponse, UserRole } from "./auth-types";
 
 const TX = "oauth_transaction";
 export async function beginLogin(returnTo = "/"): Promise<void> {
+  sessionStorage.removeItem(TX);
+  if (authConfig.clientId === "replace-with-local-public-client-id") {
+    throw new Error(
+      "Sign-in is not configured. Set VITE_WSO2_CLIENT_ID in frontend/.env to the public client ID from WSO2 Developer Portal, then restart the frontend. WSO2 API Manager must also be running.",
+    );
+  }
+  if (!window.isSecureContext || !crypto.subtle) {
+    throw new Error(
+      "Secure sign-in requires HTTPS or localhost. Open this application at http://localhost:5173.",
+    );
+  }
+  if (window.location.origin !== new URL(authConfig.redirectUri).origin) {
+    throw new Error(
+      `Open this application at ${new URL(authConfig.redirectUri).origin} to match the registered sign-in callback.`,
+    );
+  }
   const verifier = createCodeVerifier();
   const state = secureRandom();
   const nonce = secureRandom();
+  const challenge = await createCodeChallenge(verifier);
   sessionStorage.setItem(
     TX,
     JSON.stringify({ verifier, state, nonce, returnTo }),
@@ -19,7 +36,7 @@ export async function beginLogin(returnTo = "/"): Promise<void> {
     scope: authConfig.scopes.join(" "),
     state,
     nonce,
-    code_challenge: await createCodeChallenge(verifier),
+    code_challenge: challenge,
     code_challenge_method: "S256",
   }).toString();
   window.location.assign(url);
